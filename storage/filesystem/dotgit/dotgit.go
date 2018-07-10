@@ -275,8 +275,29 @@ func (d *DotGit) ForEachObjectHash(fun func(plumbing.Hash) error) error {
 }
 
 func (d *DotGit) objectPath(h plumbing.Hash) string {
-	hash := h.String()
-	return d.fs.Join(objectsPath, hash[0:2], hash[2:40])
+	hString := h.String()
+	_, err1 := d.fs.Stat(d.fs.Join(objectsPath, hString[0:2], hString[2:40])) //check if file exists
+	if err1 != nil {                                                          //if not, look for an "incoming" directory
+		directoryContents, err := d.fs.ReadDir(objectsPath)
+		if err != nil {
+			return ""
+		}
+		var incomingDirName string
+		for _, file := range directoryContents {
+			if strings.Split(file.Name(), "-")[0] == "incoming" && file.IsDir() {
+				incomingDirName = file.Name()
+			}
+		}
+		if incomingDirName == "" {
+			return ""
+		}
+		_, err = d.fs.Stat(d.fs.Join(objectsPath, incomingDirName, hString[0:2], hString[2:40]))
+		if err != nil {
+			return ""
+		}
+		return d.fs.Join(objectsPath, incomingDirName, hString[0:2], hString[2:40])
+	}
+	return d.fs.Join(objectsPath, hString[0:2], hString[2:40])
 }
 
 // Object returns a fs.File pointing the object file, if exists
