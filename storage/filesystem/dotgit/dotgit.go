@@ -295,7 +295,8 @@ func (d *DotGit) objectPath(h plumbing.Hash) string {
 		if err != nil {
 			return d.fs.Join(objectsPath, hString[0:2], hString[2:40])
 		}
-		return d.fs.Join(objectsPath, incomingDirName, hString[0:2], hString[2:40])
+		//return d.fs.Join(objectsPath, incomingDirName, hString[0:2], hString[2:40])
+		return d.fs.Join(objectsPath, hString[0:2], hString[2:40])
 	}
 	return d.fs.Join(objectsPath, hString[0:2], hString[2:40])
 }
