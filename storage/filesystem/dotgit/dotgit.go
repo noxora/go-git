@@ -303,7 +303,7 @@ func (d *DotGit) Object(h plumbing.Hash) (billy.File, error) {
 	if err1 != nil {
 		obj2, err2 := d.fs.Open(d.incomingObjectPath(h))
 		if err2 != nil {
-			return d.fs.Open(d.objectPath(h))
+			return obj1, err1
 		}
 		return obj2, err2
 	}
@@ -312,12 +312,28 @@ func (d *DotGit) Object(h plumbing.Hash) (billy.File, error) {
 
 // ObjectStat returns a os.FileInfo pointing the object file, if exists
 func (d *DotGit) ObjectStat(h plumbing.Hash) (os.FileInfo, error) {
-	return d.fs.Stat(d.objectPath(h))
+	obj1, err1 := d.fs.Stat(d.objectPath(h))
+	if err1 != nil {
+		obj2, err2 := d.fs.Stat(d.incomingObjectPath(h))
+		if err2 != nil {
+			return obj1, err1
+		}
+		return obj2, err2
+	}
+	return obj1, err1
 }
 
 // ObjectDelete removes the object file, if exists
 func (d *DotGit) ObjectDelete(h plumbing.Hash) error {
-	return d.fs.Remove(d.objectPath(h))
+	err1 := d.fs.Remove(d.objectPath(h))
+	if err1 != nil {
+		err2 := d.fs.Remove(d.incomingObjectPath(h))
+		if err2 != nil {
+			return err1
+		}
+		return err2
+	}
+	return err1
 }
 
 func (d *DotGit) readReferenceFrom(rd io.Reader, name string) (ref *plumbing.Reference, err error) {
